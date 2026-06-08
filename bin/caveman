@@ -1,0 +1,42 @@
+#!/bin/bash
+# caveman — toggle caveman token-compression mode for Hermes Agent
+#
+# Usage:
+#   caveman on [lite|full|ultra]   Activate caveman mode (default: full)
+#   caveman off                     Deactivate caveman mode
+#   caveman status                  Show current status
+
+MARKER="$HOME/.hermes/.caveman_active"
+LEVEL_MARKER="$HOME/.hermes/.caveman_level"
+
+case "${1:-status}" in
+    on)
+        LEVEL="${2:-full}"
+        case "$LEVEL" in
+            lite|full|ultra|l|f|u) ;;
+            *) echo "Invalid level: $LEVEL. Use: lite, full, or ultra"; exit 1 ;;
+        esac
+        echo "$LEVEL" > "$LEVEL_MARKER"
+        touch "$MARKER"
+        echo "Caveman mode: ON ($LEVEL)"
+        echo "Restart Hermes for the plugin to take effect."
+        echo "Or set CAVEMAN_MODE=$LEVEL for immediate effect in current session."
+        ;;
+    off)
+        rm -f "$MARKER" "$LEVEL_MARKER"
+        echo "Caveman mode: OFF"
+        echo "Restart Hermes for the change to take effect."
+        ;;
+    status)
+        if [ -f "$MARKER" ]; then
+            LEVEL=$(cat "$LEVEL_MARKER" 2>/dev/null || echo "full")
+            echo "Caveman mode: ON ($LEVEL)"
+        else
+            echo "Caveman mode: OFF"
+        fi
+        ;;
+    *)
+        echo "Usage: caveman on [lite|full|ultra] | off | status"
+        exit 1
+        ;;
+esac

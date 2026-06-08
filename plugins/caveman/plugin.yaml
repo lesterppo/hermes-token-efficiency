@@ -1,0 +1,8 @@
+name: caveman
+version: "1.0.0"
+description: Mechanical caveman mode — injects compression rules into the system message via llm_request middleware. Toggle with CAVEMAN_MODE env var (lite/full/ultra) or 'caveman on/off'.
+author: Hermes Agent
+hooks: []
+provides_hooks: []
+middleware:
+  - llm_request
