@@ -22,7 +22,7 @@ hermes plugins enable caveman
 ```bash
 hermes plugins list | grep -E "rtk-rewrite|caveman"   # both should show "enabled"
 caveman status                                         # should show OFF (user activates later)
-~/.local/bin/rtk --version                             # should show v0.42.3
+~/.local/bin/rtk --version                             # should show v0.43.0
 ```
 
 4. Tell the user:
@@ -57,7 +57,7 @@ cannot drift or be forgotten. Same reliability as built-in features.
 | bin/caveman | ~/.local/bin/caveman | Toggle CLI (caveman on/off/status) |
 | skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference |
 | skills/productivity/rtk/SKILL.md | ~/.hermes/skills/productivity/rtk/SKILL.md | RTK reference |
-| (downloaded) | ~/.local/bin/rtk | RTK binary (v0.42.3 Linux x86_64) |
+| (downloaded) | ~/.local/bin/rtk | RTK binary (v0.43.0 Linux x86_64) |
 | (rtk init) | ~/.hermes/plugins/rtk-rewrite/ | RTK auto-rewrite plugin |
 
 ## Verifying the stack works

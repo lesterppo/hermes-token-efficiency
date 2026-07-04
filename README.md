@@ -55,7 +55,7 @@ rtk gain                # Token savings tracking
 
 | Component | Type | Source | How It Works |
 |-----------|------|--------|-------------|
-| **RTK binary** | Rust CLI (v0.42.3) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (60K stars) | Compresses 100+ commands: git, tests, docker, AWS, logs, builds |
+| **RTK binary** | Rust CLI (v0.43.0) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (60K stars) | Compresses 100+ commands: git, tests, docker, AWS, logs, builds |
 | **RTK plugin** | Hermes plugin | pre_tool_call hook | Auto-rewrites `terminal()` commands through RTK before execution |
 | **Caveman plugin** | Hermes plugin | llm_request middleware | Injects compression rules into system message each session |
 | **Caveman CLI** | Shell script | `~/.local/bin/caveman` | Toggle: `caveman on/off lite/full/ultra` |

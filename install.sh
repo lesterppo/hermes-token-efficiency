@@ -50,7 +50,7 @@ mkdir -p "$HERMES_HOME/skills/productivity"
 
 echo -e "${CYAN}[1/5] Installing RTK binary...${NC}"
 
-RTK_VERSION="0.42.3"
+RTK_VERSION="0.43.0"
 RTK_URL="https://github.com/rtk-ai/rtk/releases/download/v${RTK_VERSION}/rtk-x86_64-unknown-linux-musl.tar.gz"
 
 if command -v rtk &>/dev/null; then

@@ -65,6 +65,8 @@ The skill at `productivity/caveman` serves as the reference document for compres
 
 See also: `references/plugin-architecture.md` for the llm_request middleware pattern used by the plugin — reusable for any plugin that needs to modify system messages.
 
+For the exact Hermes integration internals (where middleware fires in the conversation loop, the middleware contract, registration pattern, and prompt caching impact), see `references/hermes-plugin-integration.md`.
+
 ## Default Intensity
 
 Default intensity: **full**.
@@ -171,6 +173,10 @@ After the clear part is done, resume caveman explicitly. Signal the transition:
 | Terminal commands | **No** — exact and complete |
 | Security warnings / destructive ops | **No** — Auto-Clarity Exception applies |
 
+## Architecture Note
+
+The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v1.0.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project. The upstream repo ships its own CLI, hooks, agents, and installer — those are separate products. The Hermes plugin version (1.0.0) and the upstream tag (1.9.1 as of 2026-07) are independent. When checking for updates, compare the Hermes plugin version against the plugin's own release, not the upstream caveman repo tags.
+
 ## Common Pitfalls
 
 1. **Forgetting to enable the plugin.** Run `hermes plugins enable caveman` once. Without the plugin enabled, caveman mode has no effect.
@@ -182,6 +188,8 @@ After the clear part is done, resume caveman explicitly. Signal the transition:
 4. **Dropping critical safety warnings.** The system instructions include Auto-Clarity Exception rules. If the agent drops safety content, use `caveman off` temporarily for that conversation.
 
 5. **Using caveman for documentation or tutorial sessions.** Turn it off (`caveman off`) for sessions where the user needs detailed explanations.
+
+6. **Model ignoring compression rules despite plugin being ON.** The plugin injects instructions into the system prompt but cannot force the model to follow them. The model must actively self-enforce on every response. If the agent produces verbose paragraphs with articles, filler, markdown headings, or sign-offs while caveman is active, it has failed to apply the rules. The user will notice and call it out — this is a real correction, not a plugin issue. When caveman is ON, every response must be checked against the compression rules before delivery. No exceptions for "I was focused on the task" — the compression is part of the task.
 
 ## Silence and Non-Response
 

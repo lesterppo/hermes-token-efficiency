@@ -2,7 +2,7 @@
 name: rtk
 description: Use when working with terminal commands in dev workflows — git, tests, builds, linting, package managers, docker, AWS, logs. RTK is a CLI proxy that auto-compresses command output 60-90% before it reaches your context. Already installed and auto-rewriting via Hermes plugin. Check savings with "rtk gain".
 version: 1.0.0
-author: Hermes Agent (adapted from rtk-ai/rtk v0.42.3)
+author: Hermes Agent (adapted from rtk-ai/rtk v0.43.0)
 license: Apache-2.0
 metadata:
   hermes:
@@ -14,7 +14,9 @@ metadata:
 
 RTK is a high-performance CLI proxy that filters and compresses command output before it reaches your context. Single Rust binary, <10ms overhead, 100+ supported commands, 60-90% token reduction on common dev operations.
 
-**Status**: Installed (v0.42.3 at `~/.local/bin/rtk`). Hermes plugin active — terminal commands auto-rewritten through RTK via `pre_tool_call` hook.
+**Status**: Installed (v0.43.0 at `~/.local/bin/rtk`). Hermes plugin active — terminal commands auto-rewritten through RTK via `pre_tool_call` hook.
+
+**v0.43.0 highlights** (from v0.42.3): never-worse output guard (RTK output never exceeds raw command), git exit code propagation fixes for commit/status/worktree, OpenShift + Pulumi support, grep/docker/dotnet fixes.
 
 ## When to Use
 
@@ -162,8 +164,6 @@ Hermes has optimized built-in tools that don't go through the terminal. Choose:
 
 **Rule of thumb**: Use Hermes built-in tools for file operations. Use `terminal()` for everything else — RTK handles the compression.
 
-See also: `references/benchmarks.md` for measured compression data (80% on ls, 64% on find, 65% on pip list) and installation notes.
-
 ## RTK Config
 
 Config at `~/.config/rtk/config.toml`:
@@ -196,7 +196,7 @@ RTK compresses aggressively. If you suspect compressed output is hiding critical
 
 ## Verification Checklist
 
-- [ ] `rtk --version` returns v0.42.3+
+- [ ] `rtk --version` returns v0.43.0+
 - [ ] Plugin at `~/.hermes/plugins/rtk-rewrite/__init__.py` exists
 - [ ] Run `git status` → output is compact (auto-rewritten)
 - [ ] Run `rtk gain` → shows tracking data (after some commands)
