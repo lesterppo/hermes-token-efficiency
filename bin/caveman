@@ -2,19 +2,30 @@
 # caveman — toggle caveman token-compression mode for Hermes Agent
 #
 # Usage:
-#   caveman on [lite|full|ultra]   Activate caveman mode (default: full)
+#   caveman on [lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra]   Activate (default: full)
 #   caveman off                     Deactivate caveman mode
 #   caveman status                  Show current status
 
 MARKER="$HOME/.hermes/.caveman_active"
 LEVEL_MARKER="$HOME/.hermes/.caveman_level"
 
+VALID_LEVELS="lite full ultra wenyan-lite wenyan-full wenyan-ultra"
+
 case "${1:-status}" in
     on)
         LEVEL="${2:-full}"
         case "$LEVEL" in
-            lite|full|ultra|l|f|u) ;;
-            *) echo "Invalid level: $LEVEL. Use: lite, full, or ultra"; exit 1 ;;
+            lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra|l|f|u|wl|wf|wu) ;;
+            *) echo "Invalid level: $LEVEL. Use: $VALID_LEVELS"; exit 1 ;;
+        esac
+        # Expand short aliases
+        case "$LEVEL" in
+            l) LEVEL="lite" ;;
+            f) LEVEL="full" ;;
+            u) LEVEL="ultra" ;;
+            wl) LEVEL="wenyan-lite" ;;
+            wf) LEVEL="wenyan-full" ;;
+            wu) LEVEL="wenyan-ultra" ;;
         esac
         echo "$LEVEL" > "$LEVEL_MARKER"
         touch "$MARKER"
@@ -36,7 +47,7 @@ case "${1:-status}" in
         fi
         ;;
     *)
-        echo "Usage: caveman on [lite|full|ultra] | off | status"
+        echo "Usage: caveman on [lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra] | off | status"
         exit 1
         ;;
 esac

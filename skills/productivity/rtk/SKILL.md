@@ -1,8 +1,8 @@
 ---
 name: rtk
 description: Use when working with terminal commands in dev workflows — git, tests, builds, linting, package managers, docker, AWS, logs. RTK is a CLI proxy that auto-compresses command output 60-90% before it reaches your context. Already installed and auto-rewriting via Hermes plugin. Check savings with "rtk gain".
-version: 1.0.0
-author: Hermes Agent (adapted from rtk-ai/rtk v0.43.0)
+version: 1.2.0
+author: Hermes Agent (adapted from rtk-ai/rtk v0.43.0; 0.44.0-rc in development)
 license: Apache-2.0
 metadata:
   hermes:
@@ -163,6 +163,8 @@ Hermes has optimized built-in tools that don't go through the terminal. Choose:
 | List directory | `terminal(command="ls ...")` | Auto-rewritten by RTK plugin |
 
 **Rule of thumb**: Use Hermes built-in tools for file operations. Use `terminal()` for everything else — RTK handles the compression.
+
+See also: `references/benchmarks.md` for measured compression data (80% on ls, 64% on find, 65% on pip list) and installation notes.
 
 ## RTK Config
 

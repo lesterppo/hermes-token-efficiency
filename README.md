@@ -16,7 +16,7 @@ Two mechanical plugins that work together to compress both sides of the LLM conv
 ├──────────────────────────────────────────────────────────────┤
 │  LAYER 2: Caveman (llm_request middleware plugin)           │
 │  Intercepts: LLM API requests before each inference         │
-│  Compresses: agent conversation output (~66-75%)            │
+│  Compresses: agent conversation output (~65% measured)      │
 │  Savings:   drops filler, hedging, politeness, summaries    │
 │  Mechanism: injects compression rules into system message   │
 │             once per session — model self-compresses        │
@@ -31,7 +31,7 @@ Two mechanical plugins that work together to compress both sides of the LLM conv
 
 ```bash
 # 1. Clone this repo
-git clone https://github.com/<your-username>/hermes-token-efficiency.git
+git clone https://github.com/lesterppo/hermes-token-efficiency.git
 cd hermes-token-efficiency
 
 # 2. Run the installer
@@ -57,8 +57,8 @@ rtk gain                # Token savings tracking
 |-----------|------|--------|-------------|
 | **RTK binary** | Rust CLI (v0.43.0) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (60K stars) | Compresses 100+ commands: git, tests, docker, AWS, logs, builds |
 | **RTK plugin** | Hermes plugin | pre_tool_call hook | Auto-rewrites `terminal()` commands through RTK before execution |
-| **Caveman plugin** | Hermes plugin | llm_request middleware | Injects compression rules into system message each session |
-| **Caveman CLI** | Shell script | `~/.local/bin/caveman` | Toggle: `caveman on/off lite/full/ultra` |
+| **Caveman plugin** | Hermes plugin (v2.0.0) | llm_request middleware | Injects compression rules into system message each session |
+| **Caveman CLI** | Shell script | `~/.local/bin/caveman` | Toggle: `caveman on/off lite/full/ultra/wenyan-*` |
 | **RTK skill** | Hermes skill | Reference doc | Documents RTK commands, Hermes integration, savings tracking |
 | **Caveman skill** | Hermes skill | Reference doc | Documents compression rules, intensity levels, Auto-Clarity |
 
@@ -97,7 +97,7 @@ CAVEMAN (225 chars, 32 words):
   Bug in auth middleware. Token expiry check use `<` not `<=`. Tokens
   expiring at exact timestamp rejected. Fix: [same code...]
 
-Same technical fix. 66% fewer characters. 68% fewer words. Zero loss.
+Same technical fix. 65% fewer characters. 68% fewer words. Zero loss.
 ```
 
 ### Combined — per-session projection
@@ -105,7 +105,7 @@ Same technical fix. 66% fewer characters. 68% fewer words. Zero loss.
 ```
 Typical 30-minute dev session:
   Tool calls:    15-20 terminal() calls × 71% compression
-  Agent output:  10-15 responses × 66-75% compression
+  Agent output:  10-15 responses × 65% compression
   Total:         65-80% fewer tokens
   Overhead:      ~320 tokens (one-time caveman injection)
 ```
@@ -157,8 +157,11 @@ Model self-compresses: drops filler, hedging, articles, summaries
 | Level | System Overhead | Effect |
 |-------|:---:|---|
 | **lite** | ~175 tokens | Drop filler/hedging only. Keep articles and full sentences. Professional but tight. |
-| **full** | ~321 tokens | Drop articles, fragments OK, short synonyms. Classic caveman. **Default.** |
-| **ultra** | ~208 tokens | Abbreviate prose words, arrows for causality, one word when enough. Max density. |
+| **full** | ~321 tokens | Drop articles, fragments OK, short synonyms. Classic caveman. No tool-call narration, no decorative tables. **Default.** |
+| **ultra** | ~208 tokens | Strip conjunctions, one word when enough. No prose abbreviations, no arrows — measured zero savings. |
+| **wenyan-lite** | ~175 tokens | Semi-classical Chinese. Drop filler/hedging, keep grammar structure, classical register. |
+| **wenyan-full** | ~321 tokens | Fully 文言文. 80-90% character reduction. Classical sentence patterns, particles (之/乃/為/其). |
+| **wenyan-ultra** | ~208 tokens | Extreme classical abbreviation. Maximum compression, ultra terse. |
 
 ## Installation Details
 
@@ -198,14 +201,16 @@ hermes plugins enable caveman
 
 ```bash
 # Persistent (survives sessions)
-caveman on            # Activate full mode
-caveman on lite       # Professional-tight mode
-caveman on ultra      # Maximum compression
-caveman off           # Deactivate
-caveman status        # Check current state
+caveman on                 # Activate full mode
+caveman on lite            # Professional-tight mode
+caveman on ultra           # Maximum compression
+caveman on wenyan-full     # Classical Chinese (文言文)
+caveman off                # Deactivate
+caveman status             # Check current state
 
 # Session-only (immediate, no restart)
 CAVEMAN_MODE=full hermes
+CAVEMAN_MODE=wenyan-full hermes
 ```
 
 ### RTK Savings Tracking
@@ -248,7 +253,9 @@ hermes-token-efficiency/
 └── skills/
     └── productivity/
         ├── caveman/
-        │   └── SKILL.md               ← Caveman reference (compression rules)
+        │   ├── SKILL.md               ← Caveman reference (compression rules)
+        │   └── references/
+        │       └── hermes-plugin-integration.md
         └── rtk/
             └── SKILL.md               ← RTK reference (commands, savings)
 ```
@@ -259,8 +266,8 @@ hermes-token-efficiency/
 |-----------|--------|--------|---------|
 | RTK (Rust Token Killer) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) | [RTK Contributors](https://github.com/rtk-ai) | Apache 2.0 |
 | RTK Hermes plugin | Adapted from `rtk init --agent hermes` | RTK Contributors | Apache 2.0 |
-| Caveman concept | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) | Julius Brussee | MIT |
-| Caveman plugin + CLI | This repo | Hermes Agent | MIT |
+| Caveman concept | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) v1.9.1 | Julius Brussee | MIT |
+| Caveman plugin + CLI | This repo (v2.0.0, based on upstream v1.9.1) | Hermes Agent | MIT |
 | Caveman + RTK skills | Adapted for Hermes from upstream | Hermes Agent | MIT |
 
 ## Requirements

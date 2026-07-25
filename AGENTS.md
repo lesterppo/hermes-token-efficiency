@@ -4,6 +4,8 @@ This repo installs a two-layer token-efficiency stack for Hermes Agent:
 RTK (compresses tool output) + Caveman (compresses agent output).
 Combined savings: 65-80% fewer tokens in typical dev sessions.
 
+Based on: rtk-ai/rtk v0.43.0 + JuliusBrussee/caveman v1.9.1.
+
 ## What an agent should do when the user asks to install this
 
 1. Clone and run the installer:
@@ -52,13 +54,46 @@ cannot drift or be forgotten. Same reliability as built-in features.
 
 | Source in repo | Destination | Purpose |
 |---------------|-------------|---------|
-| plugins/caveman/plugin.yaml | ~/.hermes/plugins/caveman/plugin.yaml | Plugin manifest |
+| plugins/caveman/plugin.yaml | ~/.hermes/plugins/caveman/plugin.yaml | Plugin manifest (v2.0.0) |
 | plugins/caveman/__init__.py | ~/.hermes/plugins/caveman/__init__.py | llm_request middleware |
-| bin/caveman | ~/.local/bin/caveman | Toggle CLI (caveman on/off/status) |
-| skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference |
+| bin/caveman | ~/.local/bin/caveman | Toggle CLI (supports wenyan modes) |
+| skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference (v2.0.0) |
 | skills/productivity/rtk/SKILL.md | ~/.hermes/skills/productivity/rtk/SKILL.md | RTK reference |
 | (downloaded) | ~/.local/bin/rtk | RTK binary (v0.43.0 Linux x86_64) |
 | (rtk init) | ~/.hermes/plugins/rtk-rewrite/ | RTK auto-rewrite plugin |
+
+## Caveman intensity levels (v2.0.0)
+
+| Level | Effect |
+|-------|--------|
+| lite | Drop filler/hedging only. Professional but tight. |
+| full | Drop articles, fragments OK. Classic caveman. **Default.** |
+| ultra | Strip conjunctions, one word when enough. No abbreviations, no arrows. |
+| wenyan-lite | Semi-classical Chinese (半文言). |
+| wenyan-full | Fully 文言文. 80-90% character reduction. |
+| wenyan-ultra | Extreme classical abbreviation. Maximum compression. |
+
+Toggle: `caveman on wenyan-full` or `CAVEMAN_MODE=wenyan-full`
+
+## Key design notes for agent maintainers
+
+### Ultra mode: no prose abbreviations, no arrows
+Upstream v1.9.1 measured these under BPE tokenizer: "cfg" vs "config", "impl" vs
+"implement" — same token count. "→" is its own token. Zero savings. Costs decode
+clarity. The ultra rules explicitly forbid them. Standard acronyms only (DB, API,
+HTTP, JSON, CSS, HTML, SQL, CLI, CI, CD, PR).
+
+### Savings claims
+Upstream revised from ~75% to honest 65% (measured). Our README reflects this.
+Don't claim 75% output savings — that was overclaiming.
+
+### No self-reference
+Agent must never say "caveman mode on", "me caveman think", or produce "Normal:...
+Caveman:..." recaps. Output is caveman-only with no style announcements.
+
+### Language preservation
+Compress the style, not the language. User writes Portuguese → reply Portuguese
+caveman. No forced English openings.
 
 ## Verifying the stack works
 
@@ -76,6 +111,7 @@ After the user restarts Hermes and activates caveman:
 - **RTK not rewriting commands**: Run `rtk init --agent hermes` to reinstall the plugin
 - **macOS users**: RTK binary is x86_64 Linux only. Use `brew install rtk` instead.
 - **ARM Linux**: Download the aarch64 binary from https://github.com/rtk-ai/rtk/releases
+- **Agent using prose abbreviations in ultra**: The model may need reminding — abbreviations (cfg/impl/req) save zero tokens. Standard acronyms only.
 
 ## Privacy note
 

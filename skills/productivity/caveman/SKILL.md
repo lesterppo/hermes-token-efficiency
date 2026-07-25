@@ -1,8 +1,8 @@
 ---
 name: caveman
-description: Token-efficient communication mode cutting ~75% output tokens while keeping full technical accuracy. Mechanical enforcement via llm_request plugin (like RTK) — injects compression rules into system message. Toggle with 'caveman on/off' command or CAVEMAN_MODE env var. Supports lite, full (default), and ultra levels.
-version: 3.0.0
-author: Hermes Agent (plugin-based rewrite from JuliusBrussee/caveman)
+description: Token-efficient communication mode cutting ~65% output tokens while keeping full technical accuracy. Mechanical enforcement via llm_request plugin (like RTK) — injects compression rules into system message. Toggle with 'caveman on/off' command or CAVEMAN_MODE env var. Supports lite, full (default), ultra, wenyan-lite, wenyan-full, wenyan-ultra.
+version: 2.0.0
+author: Hermes Agent (plugin-based rewrite from JuliusBrussee/caveman v1.9.1)
 license: MIT
 metadata:
   hermes:
@@ -15,6 +15,8 @@ metadata:
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
 **Core principle:** Every word must earn its place. If a word can be dropped without losing technical accuracy, drop it.
+
+**Measured savings:** 65% output token reduction (JuliusBrussee/caveman benchmark). Not 75% — that was overclaiming. Honest 65%.
 
 ## When to Use
 
@@ -39,10 +41,13 @@ Caveman mode is enforced by the `caveman` plugin at `~/.hermes/plugins/caveman/`
 **Toggle:**
 ```bash
 # Activate (persists across sessions):
-caveman on [lite|full|ultra]
+caveman on [lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra]
 
 # Activate for current session only (no restart needed):
 export CAVEMAN_MODE=full
+
+# Shorthand aliases:
+caveman on wf    # wenyan-full
 
 # Deactivate:
 caveman off
@@ -67,6 +72,10 @@ See also: `references/plugin-architecture.md` for the llm_request middleware pat
 
 For the exact Hermes integration internals (where middleware fires in the conversation loop, the middleware contract, registration pattern, and prompt caching impact), see `references/hermes-plugin-integration.md`.
 
+## Persistence
+
+ACTIVE EVERY RESPONSE. No revert after many turns. No filler drift. Still active if unsure. Off only: "stop caveman" / "normal mode".
+
 ## Default Intensity
 
 Default intensity: **full**.
@@ -89,6 +98,8 @@ These apply at every intensity. Higher levels amplify them.
 - **Emoji and decorative characters**
 - **Markdown headings in conversation replies:** use plain text bullets or indentation instead of `###` / `##` headings
 - **Concluding summaries, sign-offs, "hope this helps" closings**
+- **Tool-call narration:** no decorative tables, no long raw error-log dumps unless asked — quote shortest decisive line
+- **Self-reference:** never name or announce the mode. No "caveman mode on", "me caveman think", no third-person caveman tags. Output caveman-only — never normal answer plus "Caveman:" recap.
 
 ### Prefer
 
@@ -103,6 +114,19 @@ These apply at every intensity. Higher levels amplify them.
 - **Error messages:** quote exactly as they appear
 - **Technical terms, function names, API names, file paths:** exact and complete
 - **Commands:** full, copy-pasteable
+- **Commit-type keywords:** feat, fix, chore, docs, etc.
+
+### Acronyms — Standard Only
+
+Standard well-known tech acronyms are OK: DB, API, HTTP, JSON, CSS, HTML, SQL, CLI, CI, CD, PR.
+
+Never invent new abbreviations: no "cfg" for config, no "impl" for implement, no "req" for request, no "res" for response, no "fn" for function, no "auth" for authentication. Tokenizer splits them the same as the full word — measured zero token saved. Full word is cheaper AND clearer.
+
+No causal arrows (→) either — it's its own token, saves nothing.
+
+### Language Preservation
+
+Preserve user's dominant language. User writes Portuguese → reply Portuguese caveman. User writes Spanish → reply Spanish caveman. Compress the style, not the language. No forced English openings or status phrases. Always keep technical terms, code, API names, CLI commands, commit-type keywords, and exact error strings verbatim — unless user explicitly asks for translation.
 
 ### Contrast Example
 
@@ -120,8 +144,8 @@ These apply at every intensity. Higher levels amplify them.
 | Level | What changes |
 |-------|-------------|
 | **lite** | No filler/hedging. Keep articles + full sentences. Professional but tight. |
-| **full** | Drop articles, fragments OK, short synonyms. Classic caveman. **Default.** |
-| **ultra** | Abbreviate prose words (DB/auth/config/req/res/fn/impl), strip conjunctions, arrows for causality (X → Y), one word when one word enough. Code symbols, function names, API names, error strings: never abbreviate. |
+| **full** | Drop articles, fragments OK, short synonyms. Classic caveman. No tool-call narration, no decorative tables/emoji, no long raw error-log dumps unless asked. Standard acronyms OK; no invented abbreviations. **Default.** |
+| **ultra** | Strip conjunctions when cause-then-effect stay unambiguous. One word when one word enough. State each fact once. NO prose abbreviations, NO arrows — measured zero token saving under tokenizer, costs decode clarity. Code symbols, function names, API names, error strings: never touch. |
 | **wenyan-lite** | Semi-classical Chinese. Drop filler/hedging but keep grammar structure, classical register. |
 | **wenyan-full** | Maximum classical terseness. Fully 文言文. 80-90% character reduction. Classical sentence patterns, verbs precede objects, subjects often omitted, classical particles (之/乃/為/其). |
 | **wenyan-ultra** | Extreme abbreviation while keeping classical Chinese feel. Maximum compression, ultra terse. |
@@ -130,16 +154,18 @@ These apply at every intensity. Higher levels amplify them.
 
 - **lite:** "Your component re-renders because you create a new object reference each render. Wrap it in `useMemo`."
 - **full:** "New object ref each render. Inline object prop = new ref = re-render. Wrap in `useMemo`."
-- **ultra:** "Inline obj prop → new ref → re-render. `useMemo`."
+- **ultra:** "Inline obj prop, new ref, re-render. `useMemo`."
 - **wenyan-lite:** "組件頻重繪，以每繪新生對象參照故。以 useMemo 包之。"
-- **wenyan-full:** "物出新參照，致重繪。useMemo 包之。"
-- **wenyan-ultra:** "新參照→重繪。useMemo 包。"
+- **wenyan-full:** "每繪新生對象參照，故重繪；以 useMemo 包之則免。"
+- **wenyan-ultra:** "新參照則重繪。useMemo 包之。"
 
 ### Examples — "Explain database connection pooling"
 
 - **lite:** "Connection pooling reuses open connections instead of creating new ones per request. Avoids repeated handshake overhead."
 - **full:** "Pool reuse open DB connections. No new connection per request. Skip handshake overhead."
-- **ultra:** "Pool = reuse DB conn. Skip handshake → fast under load."
+- **ultra:** "Pool reuse open DB connections. No per-request handshake."
+- **wenyan-full:** "池蓄已開之連，不逐請而新開，省握手之費。"
+- **wenyan-ultra:** "池蓄連，免逐請新開，省握手。"
 
 ## Auto-Clarity Exception
 
@@ -175,7 +201,7 @@ After the clear part is done, resume caveman explicitly. Signal the transition:
 
 ## Architecture Note
 
-The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v1.0.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project. The upstream repo ships its own CLI, hooks, agents, and installer — those are separate products. The Hermes plugin version (1.0.0) and the upstream tag (1.9.1 as of 2026-07) are independent. When checking for updates, compare the Hermes plugin version against the plugin's own release, not the upstream caveman repo tags.
+The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.0.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project. The upstream repo ships its own CLI, hooks, agents, and installer — those are separate products. The Hermes plugin version (2.0.0) and the upstream tag (1.9.1 as of 2026-07) are independent. When checking for updates, compare the Hermes plugin version against the plugin's own release, not the upstream caveman repo tags.
 
 ## Common Pitfalls
 
@@ -191,6 +217,8 @@ The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v1.0.0) is a **Python r
 
 6. **Model ignoring compression rules despite plugin being ON.** The plugin injects instructions into the system prompt but cannot force the model to follow them. The model must actively self-enforce on every response. If the agent produces verbose paragraphs with articles, filler, markdown headings, or sign-offs while caveman is active, it has failed to apply the rules. The user will notice and call it out — this is a real correction, not a plugin issue. When caveman is ON, every response must be checked against the compression rules before delivery. No exceptions for "I was focused on the task" — the compression is part of the task.
 
+7. **Using prose abbreviations in ultra mode, or causal arrows.** They were measured to save zero tokens under BPE tokenizer. Don't use them. Standard acronyms only (DB, API, HTTP).
+
 ## Silence and Non-Response
 
 In caveman mode, you may sometimes determine that no response is the best response. Situations where silence or a minimal acknowledgment is appropriate:
@@ -205,8 +233,12 @@ Err on the side of responding. Silence should be the exception, not the rule. Wh
 
 - [ ] Plugin enabled: `hermes plugins list` shows `caveman`
 - [ ] Caveman toggled on: `caveman status` shows ON
-- [ ] Or env var set: `echo $CAVEMAN_MODE` returns lite/full/ultra
+- [ ] Or env var set: `echo $CAVEMAN_MODE` returns lite/full/ultra/wenyan-*
 - [ ] Restart Hermes (unless using env var method)
 - [ ] Agent responses are compressed (no filler, articles dropped at full level)
 - [ ] Code blocks and files remain complete and uncompressed
 - [ ] Safety content still appears in full (Auto-Clarity working)
+- [ ] No "caveman mode on", "me caveman think", or other self-references
+- [ ] Language matches user's language (no forced English)
+- [ ] No prose abbreviations in ultra mode (cfg/impl/req/res/fn)
+- [ ] No causal arrows (→) in ultra mode
