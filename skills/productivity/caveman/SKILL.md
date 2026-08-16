@@ -68,7 +68,7 @@ The marker file approach (`caveman on/off`) persists across sessions. The env va
 
 The skill at `productivity/caveman` serves as the reference document for compression rules, intensity levels, and examples. Load it with `skill_view(name='caveman')` if you need to review the rules. The plugin handles enforcement; the skill is documentation.
 
-See also: `references/plugin-architecture.md` for the llm_request middleware pattern used by the plugin — reusable for any plugin that needs to modify system messages.
+See also: `references/hermes-plugin-integration.md` for the llm_request middleware pattern used by the plugin — reusable for any plugin that needs to modify system messages.
 
 For the exact Hermes integration internals (where middleware fires in the conversation loop, the middleware contract, registration pattern, and prompt caching impact), see `references/hermes-plugin-integration.md`.
 

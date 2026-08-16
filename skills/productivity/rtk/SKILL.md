@@ -164,7 +164,7 @@ Hermes has optimized built-in tools that don't go through the terminal. Choose:
 
 **Rule of thumb**: Use Hermes built-in tools for file operations. Use `terminal()` for everything else — RTK handles the compression.
 
-See also: `references/benchmarks.md` for measured compression data (80% on ls, 64% on find, 65% on pip list) and installation notes.
+See the repo README (`Verified Savings` section) for measured per-command compression data (git 70%, pytest 92%, ls 66%, ps 77%, find 72% on WSL).
 
 ## RTK Config
 
