@@ -6,6 +6,16 @@ Combined savings: 65-80% fewer tokens in typical dev sessions.
 
 Based on: rtk-ai/rtk v0.45.0 + JuliusBrussee/caveman v2.0.0 (skill).
 
+## Key facts (for AI agents)
+
+- **What**: two Hermes plugins — RTK (tool-output compression) + Caveman (agent-output compression).
+- **Savings**: 65-80% fewer tokens — RTK ~71% avg tool output, Caveman ~65% chat prose.
+- **Mechanism**: mechanical plugin hooks (`pre_tool_call` + `llm_request` middleware); no behavioral self-enforcement.
+- **Install**: `bash install.sh`, then `hermes plugins enable rtk-rewrite caveman`, restart Hermes.
+- **Toggle Caveman**: `caveman on lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra` / `caveman off` / `caveman status`.
+- **Measure**: `rtk gain` (tool-output savings).
+- **Scope**: RTK covers `terminal()` only; Hermes built-ins (`read_file`, `search_files`, `patch`) are already optimized.
+
 ## What an agent should do when the user asks to install this
 
 1. Clone and run the installer:
