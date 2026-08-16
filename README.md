@@ -1,5 +1,10 @@
 # Hermes Token Efficiency Stack
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![RTK v0.45.0](https://img.shields.io/badge/RTK-v0.45.0-green)](https://github.com/rtk-ai/rtk)
+[![Caveman v2.1.0](https://img.shields.io/badge/Caveman-v2.1.0-orange)](https://github.com/JuliusBrussee/caveman)
+[![Stars](https://img.shields.io/github/stars/lesterppo/hermes-token-efficiency?color=yellow)](https://github.com/lesterppo/hermes-token-efficiency/stargazers)
+
 **RTK + Caveman plugin workflow for Hermes Agent — cut token consumption by 65-80%**
 
 Two mechanical plugins that work together to compress both sides of the LLM conversation: tool output (RTK) and agent output (Caveman). No behavioral self-enforcement — both plug into Hermes' plugin system at the middleware level, making them as reliable as built-in features.
@@ -280,6 +285,26 @@ This repo intentionally stays on the lightweight, output-only path: a two-file H
 | Caveman concept | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) v2.0.0 | Julius Brussee | MIT (skill) / BSL-1.1 (engine) |
 | Caveman plugin + CLI | This repo (v2.1.0, based on upstream v2.0.0 skill) | Hermes Agent | MIT |
 | Caveman + RTK skills | Adapted for Hermes from upstream | Hermes Agent | MIT |
+
+## FAQ
+
+**Q: What does this stack do?**
+Two Hermes plugins that cut LLM token consumption 65-80%: RTK compresses terminal command output before it reaches context; Caveman compresses the agent's own responses. Both are mechanical plugin hooks, not behavioral self-enforcement.
+
+**Q: Does Caveman affect code quality?**
+No. Code blocks, files written to disk, commits, and PR descriptions are never compressed — the plugin only tightens conversation prose. See the `caveman` skill's "Boundaries" table.
+
+**Q: Which Hermes tools does RTK compress?**
+Only `terminal()` calls. Hermes built-in tools (`read_file`, `search_files`, `patch`) bypass the terminal and are already optimized.
+
+**Q: How is this different from installing RTK or Caveman directly?**
+It packages both as Hermes plugins behind a single `install.sh`, plus a toggle CLI and reference skills. Upstream Caveman 2 (v2.0.0) also ships a BSL-1.1 input-compression engine — this repo stays on the lightweight output-only path.
+
+**Q: How do I measure savings?**
+`rtk gain` (tool-output savings, per-command + cumulative) and `caveman status` (mode state).
+
+**Q: Is it free?**
+Yes. This repo is MIT. RTK is Apache 2.0. Upstream Caveman skill is MIT (its optional engine is BSL-1.1, self-hosted use free).
 
 ## Requirements
 
