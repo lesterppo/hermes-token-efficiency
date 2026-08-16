@@ -5,7 +5,7 @@ Toggle via:
   CAVEMAN_MODE=lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra  (env var)
   caveman on|off [lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra]  (marker file)
 
-Based on upstream JuliusBrussee/caveman v1.9.1 — honest 65% measured output reduction.
+Based on upstream JuliusBrussee/caveman v2.0.0 skill — honest 65% measured output reduction.
 Rules validated against tokenizer behaviour: prose abbreviations and causal arrows
 measured as zero token savings; removed from ultra mode for decode clarity.
 
@@ -23,7 +23,7 @@ _CAVEMAN_MARKER = os.path.expanduser("~/.hermes/.caveman_active")
 _CAVEMAN_LEVEL_MARKER = os.path.expanduser("~/.hermes/.caveman_level")
 
 # --- Caveman instruction blocks per intensity level ------------------------
-# Rules validated against upstream JuliusBrussee/caveman v1.9.1.
+# Rules validated against the upstream JuliusBrussee/caveman skill (v2.0.0).
 # Key corrections vs earlier versions:
 #   - ULTRA: NO prose abbreviations (cfg/impl/req/res/fn/auth) — measured zero
 #     token saving under BPE tokenizer; costs decode clarity.

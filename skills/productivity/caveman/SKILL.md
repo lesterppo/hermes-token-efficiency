@@ -1,8 +1,8 @@
 ---
 name: caveman
 description: Token-efficient communication mode cutting ~65% output tokens while keeping full technical accuracy. Mechanical enforcement via llm_request plugin (like RTK) — injects compression rules into system message. Toggle with 'caveman on/off' command or CAVEMAN_MODE env var. Supports lite, full (default), ultra, wenyan-lite, wenyan-full, wenyan-ultra.
-version: 2.0.0
-author: Hermes Agent (plugin-based rewrite from JuliusBrussee/caveman v1.9.1)
+version: 2.1.0
+author: Hermes Agent (plugin-based rewrite from JuliusBrussee/caveman v2.0.0 skill)
 license: MIT
 metadata:
   hermes:
@@ -16,7 +16,7 @@ Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
 **Core principle:** Every word must earn its place. If a word can be dropped without losing technical accuracy, drop it.
 
-**Measured savings:** 65% output token reduction (JuliusBrussee/caveman benchmark). Not 75% — that was overclaiming. Honest 65%.
+**Measured savings:** 65% output token reduction (JuliusBrussee/caveman benchmark). Not 75% — that was overclaiming. Honest 65%. Note: 65% is the chat-prose figure; upstream reports ~8.5% on agentic coding runs — output compression is not bill reduction.
 
 ## When to Use
 
@@ -201,7 +201,7 @@ After the clear part is done, resume caveman explicitly. Signal the transition:
 
 ## Architecture Note
 
-The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.0.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project. The upstream repo ships its own CLI, hooks, agents, and installer — those are separate products. The Hermes plugin version (2.0.0) and the upstream tag (1.9.1 as of 2026-07) are independent. When checking for updates, compare the Hermes plugin version against the plugin's own release, not the upstream caveman repo tags.
+The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.1.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project — the upstream repo also ships its own CLI, hooks, agents, installer, and (since v2.0.0) a BSL-1.1 input-compression engine/proxy. This plugin tracks only the upstream *skill* (the shorter-answers rules, unchanged from v1.9.1 through v2.0.0). The Hermes plugin version (2.1.0) and the upstream tag (v2.0.0) are independent — the 2.1.0 bump disambiguates the earlier 2.0.0↔2.0.0 name collision. When checking for updates, compare against the plugin's own release, not upstream repo tags.
 
 ## Common Pitfalls
 

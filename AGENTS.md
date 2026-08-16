@@ -4,7 +4,7 @@ This repo installs a two-layer token-efficiency stack for Hermes Agent:
 RTK (compresses tool output) + Caveman (compresses agent output).
 Combined savings: 65-80% fewer tokens in typical dev sessions.
 
-Based on: rtk-ai/rtk v0.43.0 + JuliusBrussee/caveman v1.9.1.
+Based on: rtk-ai/rtk v0.45.0 + JuliusBrussee/caveman v2.0.0 (skill).
 
 ## What an agent should do when the user asks to install this
 
@@ -24,7 +24,7 @@ hermes plugins enable caveman
 ```bash
 hermes plugins list | grep -E "rtk-rewrite|caveman"   # both should show "enabled"
 caveman status                                         # should show OFF (user activates later)
-~/.local/bin/rtk --version                             # should show v0.43.0
+~/.local/bin/rtk --version                             # should show v0.45.0
 ```
 
 4. Tell the user:
@@ -54,15 +54,15 @@ cannot drift or be forgotten. Same reliability as built-in features.
 
 | Source in repo | Destination | Purpose |
 |---------------|-------------|---------|
-| plugins/caveman/plugin.yaml | ~/.hermes/plugins/caveman/plugin.yaml | Plugin manifest (v2.0.0) |
+| plugins/caveman/plugin.yaml | ~/.hermes/plugins/caveman/plugin.yaml | Plugin manifest (v2.1.0) |
 | plugins/caveman/__init__.py | ~/.hermes/plugins/caveman/__init__.py | llm_request middleware |
 | bin/caveman | ~/.local/bin/caveman | Toggle CLI (supports wenyan modes) |
-| skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference (v2.0.0) |
+| skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference (v2.1.0) |
 | skills/productivity/rtk/SKILL.md | ~/.hermes/skills/productivity/rtk/SKILL.md | RTK reference |
-| (downloaded) | ~/.local/bin/rtk | RTK binary (v0.43.0 Linux x86_64) |
+| (downloaded) | ~/.local/bin/rtk | RTK binary (v0.45.0 Linux x86_64) |
 | (rtk init) | ~/.hermes/plugins/rtk-rewrite/ | RTK auto-rewrite plugin |
 
-## Caveman intensity levels (v2.0.0)
+## Caveman intensity levels (v2.1.0)
 
 | Level | Effect |
 |-------|--------|
@@ -78,7 +78,7 @@ Toggle: `caveman on wenyan-full` or `CAVEMAN_MODE=wenyan-full`
 ## Key design notes for agent maintainers
 
 ### Ultra mode: no prose abbreviations, no arrows
-Upstream v1.9.1 measured these under BPE tokenizer: "cfg" vs "config", "impl" vs
+Upstream caveman skill measured these under BPE tokenizer: "cfg" vs "config", "impl" vs
 "implement" — same token count. "→" is its own token. Zero savings. Costs decode
 clarity. The ultra rules explicitly forbid them. Standard acronyms only (DB, API,
 HTTP, JSON, CSS, HTML, SQL, CLI, CI, CD, PR).

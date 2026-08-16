@@ -55,9 +55,9 @@ rtk gain                # Token savings tracking
 
 | Component | Type | Source | How It Works |
 |-----------|------|--------|-------------|
-| **RTK binary** | Rust CLI (v0.43.0) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (60K stars) | Compresses 100+ commands: git, tests, docker, AWS, logs, builds |
+| **RTK binary** | Rust CLI (v0.45.0) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (76K stars) | Compresses 100+ commands: git, tests, docker, AWS, k8s, logs, builds |
 | **RTK plugin** | Hermes plugin | pre_tool_call hook | Auto-rewrites `terminal()` commands through RTK before execution |
-| **Caveman plugin** | Hermes plugin (v2.0.0) | llm_request middleware | Injects compression rules into system message each session |
+| **Caveman plugin** | Hermes plugin (v2.1.0) | llm_request middleware | Injects compression rules into system message each session |
 | **Caveman CLI** | Shell script | `~/.local/bin/caveman` | Toggle: `caveman on/off lite/full/ultra/wenyan-*` |
 | **RTK skill** | Hermes skill | Reference doc | Documents RTK commands, Hermes integration, savings tracking |
 | **Caveman skill** | Hermes skill | Reference doc | Documents compression rules, intensity levels, Auto-Clarity |
@@ -260,14 +260,25 @@ hermes-token-efficiency/
             └── SKILL.md               ← RTK reference (commands, savings)
 ```
 
+## Upstream Sync — Caveman 2 (v2.0.0)
+
+Upstream [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) is now at **v2.0.0 ("Caveman 2")**. Two changes matter for this repo:
+
+1. **The skill is unchanged.** The `/caveman` shorter-answers skill (which this repo's plugin re-implements as `llm_request` middleware) is still MIT and still the same rules. This repo's output-compression behavior is unaffected.
+2. **Caveman 2 adds input compression.** Upstream now ships a separate **Engine + Proxy** (BSL-1.1) that shrinks what the model *reads* — tool outputs, logs, JSON, code — before the provider call (33.2% fewer input tokens in a pinned benchmark; 93% on a 40-record JSON). It natively wraps 7 agents, including Hermes (`caveman hermes`).
+
+This repo intentionally stays on the lightweight, output-only path: a two-file Hermes plugin, no Go/Node runtime, no BSL-licensed engine. If you also want input compression, install upstream's `@caveman-ai/cli` and wrap Hermes — it composes with this repo's RTK layer.
+
+**Honest-numbers note** (from upstream v1.10.0): 65% is the chat-prose output figure; on agentic coding runs, JetBrains independently measured ~8.5%. Output compression is not bill reduction — input tokens and reasoning are untouched by the skill.
+
 ## Credits & Upstream
 
 | Component | Source | Author | License |
 |-----------|--------|--------|---------|
 | RTK (Rust Token Killer) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) | [RTK Contributors](https://github.com/rtk-ai) | Apache 2.0 |
 | RTK Hermes plugin | Adapted from `rtk init --agent hermes` | RTK Contributors | Apache 2.0 |
-| Caveman concept | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) v1.9.1 | Julius Brussee | MIT |
-| Caveman plugin + CLI | This repo (v2.0.0, based on upstream v1.9.1) | Hermes Agent | MIT |
+| Caveman concept | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) v2.0.0 | Julius Brussee | MIT (skill) / BSL-1.1 (engine) |
+| Caveman plugin + CLI | This repo (v2.1.0, based on upstream v2.0.0 skill) | Hermes Agent | MIT |
 | Caveman + RTK skills | Adapted for Hermes from upstream | Hermes Agent | MIT |
 
 ## Requirements
@@ -281,4 +292,4 @@ hermes-token-efficiency/
 
 This repo (plugin, CLI, skills, docs): **MIT**  
 RTK binary and plugin adapter: **Apache 2.0** ([upstream](https://github.com/rtk-ai/rtk))  
-Caveman concept: **MIT** ([upstream](https://github.com/JuliusBrussee/caveman))
+Caveman concept: **MIT** (skill) / **BSL-1.1** (engine, self-hosted use free) ([upstream](https://github.com/JuliusBrussee/caveman))
