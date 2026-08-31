@@ -66,7 +66,7 @@ hermes plugins enable caveman
 
 The marker file approach (`caveman on/off`) persists across sessions. The env var approach (`CAVEMAN_MODE=full`) is session-scoped and takes effect immediately.
 
-**Mid-session level changes (v2.2.0+):** the middleware re-reads the marker files on every LLM request and swaps the injected instruction block when the level changes — `caveman on lite` → `caveman on ultra` applies without restart. `caveman off` strips the injected block from the system message instead of leaving stale rules behind.
+**Mid-session level changes (v2.2.1):** the middleware is stateless per request — it strips any existing caveman block, then appends the active level's block after re-reading the marker files. `caveman on lite` → `caveman on ultra` applies without restart; `caveman off` removes the block from the next request. Because the gateway is one long-lived process serving many conversations, this design also means every new session gets its own injection (no once-per-process sentinel), and concurrent sessions can run different levels.
 
 ### Skill (Secondary — Reference/Documentation)
 
@@ -206,7 +206,7 @@ Example shows FORMAT only — write warnings in the session language, not the ex
 
 ## Architecture Note
 
-The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.2.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project — the upstream repo also ships its own CLI, hooks, installer, a BSL-1.1 input-compression engine/proxy (33.2% provider-reported input-token reduction in a pinned Claude Code benchmark), and pixel-mode skill conversion. This plugin tracks only the upstream *skill* (MIT; the shorter-answers rules). The Hermes plugin version (2.2.0) and the upstream tag (v2.4.0) are independent version lines — when checking for updates, compare the plugin against the upstream SKILL.md content, not upstream release numbers.
+The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.2.1) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project — the upstream repo also ships its own CLI, hooks, installer, a BSL-1.1 input-compression engine/proxy (33.2% provider-reported input-token reduction in a pinned Claude Code benchmark), and pixel-mode skill conversion. This plugin tracks only the upstream *skill* (MIT; the shorter-answers rules). The Hermes plugin version (2.2.1) and the upstream tag (v2.4.0) are independent version lines — when checking for updates, compare the plugin against the upstream SKILL.md content, not upstream release numbers.
 
 Upstream v2.2.0–v2.4.0 changes were mostly installer/proxy/CLI hardening (outside our scope); the skill itself was restructured with these rule additions, all merged here: never-ADD anti-mangle rule, tool-call discipline, article-language clarification (CJK particles are grammar), explicit negation preservation, wenyan-only classical characters, expanded Auto-Clarity (multi-step order risk, clarification requests).
 

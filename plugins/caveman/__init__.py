@@ -205,11 +205,100 @@ _LEVEL_ALIASES = {
     "wu": "wenyan-ultra",
 }
 
-# Sentinel + state to prevent double-injection and to support mid-session
-# level changes (caveman on lite -> caveman on ultra without restart).
-_CAVEMAN_INJECTED = False
-_CAVEMAN_INJECTED_LEVEL: Optional[str] = None
-_CAVEMAN_INJECTED_TEXT: Optional[str] = None
+# No per-process sentinel: the desktop gateway is ONE long-lived process serving
+# many sessions. Injection state is derived per-request instead:
+#   1. Strip any caveman block(s) already present in the system message
+#      (self-identifying format, regex below) — makes the op idempotent.
+#   2. Append the current level's block if (and only if) caveman is active.
+# Same text appended every turn => system prompt stays byte-identical across
+# turns (prompt-cache friendly). Level changes swap the block; 'off' strips it.
+_CAVEMAN_BLOCK_RE = None  # compiled lazily in _caveman_middleware
+
+
+def _get_block_re():
+    """All instruction blocks share a fixed header and end with a 'Goal:' line."""
+    global _CAVEMAN_BLOCK_RE
+    if _CAVEMAN_BLOCK_RE is None:
+        import re
+        _CAVEMAN_BLOCK_RE = re.compile(
+            r"\n*\[SYSTEM INSTRUCTION — ACTIVE THIS SESSION\]\n"
+            r"You are in CAVEMAN .+? mode\..*?Goal: [^\n]*\n?",
+            re.DOTALL,
+        )
+    return _CAVEMAN_BLOCK_RE
+
+
+def _caveman_middleware(**kwargs: Any) -> Dict[str, Any]:
+    """Middleware that injects caveman compression rules into the system message.
+
+    Stateless per request: strips existing caveman block(s), then appends the
+    active level's block. Safe for multi-session processes, mid-session level
+    changes, and 'caveman off' (block disappears next request).
+    """
+    request = kwargs.get("request", {})
+    if not isinstance(request, dict):
+        return {"request": request}
+
+    messages = request.get("messages")
+    if not isinstance(messages, list) or not messages:
+        return {"request": request}
+
+    level = _get_active_level()
+
+    # Locate first usable system message
+    system_idx = None
+    for i, msg in enumerate(messages):
+        if isinstance(msg, dict) and msg.get("role") == "system":
+            system_idx = i
+            break
+
+    # 1. Strip any previously injected blocks (all system messages, idempotent)
+    re_obj = _get_block_re()
+    for msg in messages:
+        if (
+            isinstance(msg, dict)
+            and msg.get("role") == "system"
+            and isinstance(msg.get("content"), str)
+            and "[SYSTEM INSTRUCTION — ACTIVE THIS SESSION]" in msg["content"]
+        ):
+            msg["content"] = re_obj.sub("", msg["content"])
+
+    if level is None:
+        logger.debug("Caveman: inactive (stripped any stale blocks)")
+        return {"request": request}
+
+    instruction = _LEVEL_INSTRUCTIONS.get(level)
+    if not instruction:
+        return {"request": request}
+    block = instruction.strip()
+
+    # 2. Inject current level into the first system message (or prepend one)
+    if system_idx is None:
+        messages.insert(0, {"role": "system", "content": block})
+        logger.debug("Caveman: prepended system message (level=%s)", level)
+        return {"request": request}
+
+    system_msg = messages[system_idx]
+    content = system_msg.get("content", "")
+    if not isinstance(content, str):
+        # Multimodal/unexpected system content — leave untouched rather than
+        # corrupt it; try the next plain-text system message if one exists.
+        for msg in messages[system_idx + 1:]:
+            if (
+                isinstance(msg, dict)
+                and msg.get("role") == "system"
+                and isinstance(msg.get("content"), str)
+            ):
+                msg["content"] = msg["content"] + "\n\n" + block
+                logger.debug("Caveman: injected into secondary system message (level=%s)", level)
+                return {"request": request}
+        logger.debug("Caveman: no str system content found, skipping injection")
+        return {"request": request}
+
+    system_msg["content"] = content + "\n\n" + block
+    logger.debug("Caveman: injected into system message (level=%s, idx=%d)", level, system_idx)
+
+    return {"request": request}
 
 
 def register(ctx):
@@ -244,92 +333,3 @@ def _get_active_level() -> Optional[str]:
 
     return None
 
-
-def _strip_injected_text(messages: list) -> None:
-    """Remove a previously injected caveman instruction block from system messages."""
-    global _CAVEMAN_INJECTED_TEXT
-    text = _CAVEMAN_INJECTED_TEXT
-    if not text:
-        return
-    for variant in ("\n\n" + text, text):
-        for msg in messages:
-            if (
-                isinstance(msg, dict)
-                and msg.get("role") == "system"
-                and isinstance(msg.get("content"), str)
-                and variant in msg["content"]
-            ):
-                msg["content"] = msg["content"].replace(variant, "", 1)
-                break
-    _CAVEMAN_INJECTED_TEXT = None
-
-
-def _caveman_middleware(**kwargs: Any) -> Dict[str, Any]:
-    """Middleware that injects caveman compression rules into the system message."""
-    global _CAVEMAN_INJECTED, _CAVEMAN_INJECTED_LEVEL, _CAVEMAN_INJECTED_TEXT
-
-    request = kwargs.get("request", {})
-    if not isinstance(request, dict):
-        return {"request": request}
-
-    messages = request.get("messages")
-    if not isinstance(messages, list) or not messages:
-        return {"request": request}
-
-    level = _get_active_level()
-    if level is None:
-        # Caveman not active. If we injected earlier in this process (mode was
-        # turned off mid-session), strip the stale instructions instead of
-        # leaving them in the system prompt.
-        if _CAVEMAN_INJECTED:
-            _strip_injected_text(messages)
-        _CAVEMAN_INJECTED = False
-        _CAVEMAN_INJECTED_LEVEL = None
-        return {"request": request}
-
-    instruction = _LEVEL_INSTRUCTIONS.get(level)
-    if not instruction:
-        return {"request": request}
-
-    if _CAVEMAN_INJECTED and _CAVEMAN_INJECTED_LEVEL == level:
-        # Already injected with the SAME level — no-op (keeps prompt-cache stable).
-        return {"request": request}
-
-    # Find the system message (usually messages[0])
-    system_idx = None
-    for i, msg in enumerate(messages):
-        if isinstance(msg, dict) and msg.get("role") == "system":
-            system_idx = i
-            break
-
-    if system_idx is None:
-        # No system message — prepend one
-        messages.insert(0, {"role": "system", "content": instruction.strip()})
-        _CAVEMAN_INJECTED = True
-        _CAVEMAN_INJECTED_LEVEL = level
-        _CAVEMAN_INJECTED_TEXT = instruction.strip()
-        logger.debug("Caveman: prepended system message (level=%s)", level)
-        return {"request": request}
-
-    # Level changed mid-session (or first injection): remove stale block, if any,
-    # then append the current level's rules. Re-reads marker files every call, so
-    # 'caveman on <level>' applies without restarting Hermes.
-    if _CAVEMAN_INJECTED:
-        _strip_injected_text(messages)
-
-    system_msg = messages[system_idx]
-    content = system_msg.get("content", "")
-    if not isinstance(content, str):
-        # Multimodal/unexpected system content — leave untouched rather than
-        # corrupt it; treat as not-injected for this request.
-        logger.debug("Caveman: system content not str, skipping injection")
-        return {"request": request}
-
-    # Inject caveman rules after the existing system prompt
-    system_msg["content"] = content + "\n\n" + instruction.strip()
-    _CAVEMAN_INJECTED = True
-    _CAVEMAN_INJECTED_LEVEL = level
-    _CAVEMAN_INJECTED_TEXT = instruction.strip()
-    logger.debug("Caveman: injected into system message (level=%s, idx=%d)", level, system_idx)
-
-    return {"request": request}
