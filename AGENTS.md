@@ -4,7 +4,7 @@ This repo installs a two-layer token-efficiency stack for Hermes Agent:
 RTK (compresses tool output) + Caveman (compresses agent output).
 Combined savings: 65-80% fewer tokens in typical dev sessions.
 
-Based on: rtk-ai/rtk v0.45.0 + JuliusBrussee/caveman v2.0.0 (skill).
+Based on: rtk-ai/rtk v0.46.0 + JuliusBrussee/caveman v2.4.0 (skill; plugin v2.2.0).
 
 ## Key facts (for AI agents)
 
@@ -34,7 +34,7 @@ hermes plugins enable caveman
 ```bash
 hermes plugins list | grep -E "rtk-rewrite|caveman"   # both should show "enabled"
 caveman status                                         # should show OFF (user activates later)
-~/.local/bin/rtk --version                             # should show v0.45.0
+~/.local/bin/rtk --version                             # should show v0.46.0
 ```
 
 4. Tell the user:
@@ -64,15 +64,15 @@ cannot drift or be forgotten. Same reliability as built-in features.
 
 | Source in repo | Destination | Purpose |
 |---------------|-------------|---------|
-| plugins/caveman/plugin.yaml | ~/.hermes/plugins/caveman/plugin.yaml | Plugin manifest (v2.1.0) |
+| plugins/caveman/plugin.yaml | ~/.hermes/plugins/caveman/plugin.yaml | Plugin manifest (v2.2.0) |
 | plugins/caveman/__init__.py | ~/.hermes/plugins/caveman/__init__.py | llm_request middleware |
 | bin/caveman | ~/.local/bin/caveman | Toggle CLI (supports wenyan modes) |
-| skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference (v2.1.0) |
+| skills/productivity/caveman/SKILL.md | ~/.hermes/skills/productivity/caveman/SKILL.md | Caveman reference (v2.2.0) |
 | skills/productivity/rtk/SKILL.md | ~/.hermes/skills/productivity/rtk/SKILL.md | RTK reference |
-| (downloaded) | ~/.local/bin/rtk | RTK binary (v0.45.0 Linux x86_64) |
+| (downloaded) | ~/.local/bin/rtk | RTK binary (v0.46.0 Linux x86_64) |
 | (rtk init) | ~/.hermes/plugins/rtk-rewrite/ | RTK auto-rewrite plugin |
 
-## Caveman intensity levels (v2.1.0)
+## Caveman intensity levels (v2.2.0)
 
 | Level | Effect |
 |-------|--------|

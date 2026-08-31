@@ -1,8 +1,8 @@
 ---
 name: caveman
 description: Token-efficient communication mode cutting ~65% output tokens while keeping full technical accuracy. Mechanical enforcement via llm_request plugin (like RTK) — injects compression rules into system message. Toggle with 'caveman on/off' command or CAVEMAN_MODE env var. Supports lite, full (default), ultra, wenyan-lite, wenyan-full, wenyan-ultra.
-version: 2.1.0
-author: Hermes Agent (plugin-based rewrite from JuliusBrussee/caveman v2.0.0 skill)
+version: 2.2.0
+author: Hermes Agent (plugin-based rewrite from JuliusBrussee/caveman skill, synced to upstream v2.4.0)
 license: MIT
 metadata:
   hermes:
@@ -15,6 +15,8 @@ metadata:
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
 **Core principle:** Every word must earn its place. If a word can be dropped without losing technical accuracy, drop it.
+
+**Compression never grows output.** Never ADD words to sound caveman — no inserted pronoun or copula to fake broken grammar ("when it not" costs one token more than "when not" and says the same thing). Keep correct verb forms when they cost the same ("sees" = "see" = one token). If caveman phrasing is not shorter than plain phrasing, use plain. Same logic as the abbreviation/arrows ban: zero token saving buys nothing.
 
 **Measured savings:** 65% output token reduction (JuliusBrussee/caveman benchmark). Not 75% — that was overclaiming. Honest 65%. Note: 65% is the chat-prose figure; upstream reports ~8.5% on agentic coding runs — output compression is not bill reduction.
 
@@ -64,13 +66,13 @@ hermes plugins enable caveman
 
 The marker file approach (`caveman on/off`) persists across sessions. The env var approach (`CAVEMAN_MODE=full`) is session-scoped and takes effect immediately.
 
+**Mid-session level changes (v2.2.0+):** the middleware re-reads the marker files on every LLM request and swaps the injected instruction block when the level changes — `caveman on lite` → `caveman on ultra` applies without restart. `caveman off` strips the injected block from the system message instead of leaving stale rules behind.
+
 ### Skill (Secondary — Reference/Documentation)
 
 The skill at `productivity/caveman` serves as the reference document for compression rules, intensity levels, and examples. Load it with `skill_view(name='caveman')` if you need to review the rules. The plugin handles enforcement; the skill is documentation.
 
 See also: `references/hermes-plugin-integration.md` for the llm_request middleware pattern used by the plugin — reusable for any plugin that needs to modify system messages.
-
-For the exact Hermes integration internals (where middleware fires in the conversation loop, the middleware contract, registration pattern, and prompt caching impact), see `references/hermes-plugin-integration.md`.
 
 ## Persistence
 
@@ -90,7 +92,7 @@ These apply at every intensity. Higher levels amplify them.
 
 ### Drop These Always
 
-- **Articles:** a, an, the
+- **Articles:** a, an, the — *article languages only; see "Article languages" below*
 - **Filler words:** just, really, basically, actually, simply, literally, very, quite, somewhat
 - **Politeness padding:** sure, certainly, of course, happy to, I'd be glad to, no problem
 - **Hedging language:** I think, perhaps, maybe, it seems like, it appears that, it's possible that
@@ -98,8 +100,13 @@ These apply at every intensity. Higher levels amplify them.
 - **Emoji and decorative characters**
 - **Markdown headings in conversation replies:** use plain text bullets or indentation instead of `###` / `##` headings
 - **Concluding summaries, sign-offs, "hope this helps" closings**
-- **Tool-call narration:** no decorative tables, no long raw error-log dumps unless asked — quote shortest decisive line
-- **Self-reference:** never name or announce the mode. No "caveman mode on", "me caveman think", no third-person caveman tags. Output caveman-only — never normal answer plus "Caveman:" recap.
+- **Tool-call narration:** no decorative tables, no long raw error-log dumps unless asked — quote shortest decisive line. **Tool calls fire direct:** no preamble, plan, or progress note before or between calls; after a result, the next call or the final answer comes directly
+- **Self-reference:** never name or announce the mode. No "caveman mode on", "me caveman think", no third-person caveman tags. Output caveman-only — never normal answer plus "Caveman:" recap. (Exception: user asks what mode is active → say so plainly.)
+
+### Never Drop
+
+- **Negations:** not, never, no, only, except — dropping these flips meaning worse than any token saved
+- **Numbers and units:** exact, always
 
 ### Prefer
 
@@ -126,18 +133,11 @@ No causal arrows (→) either — it's its own token, saves nothing.
 
 ### Language Preservation
 
-Preserve user's dominant language. User writes Portuguese → reply Portuguese caveman. User writes Spanish → reply Spanish caveman. Compress the style, not the language. No forced English openings or status phrases. Always keep technical terms, code, API names, CLI commands, commit-type keywords, and exact error strings verbatim — unless user explicitly asks for translation.
+Preserve user's dominant language. User writes Portuguese → reply Portuguese caveman. User writes Spanish → reply Spanish caveman. Compress the style, not the language. No forced English openings or status phrases. Every emitted line in that language — openings, pre-tool status lines, all — not just the final reply. Always keep technical terms, code, API names, CLI commands, commit-type keywords, and exact error strings verbatim — unless user explicitly asks for translation.
 
-### Contrast Example
+### Article Languages
 
-**Not caveman:**
-> Sure! I'd be happy to help you with that. The issue you're experiencing is likely caused by a token expiry check in the auth middleware that uses `<` instead of `<=`, which means tokens that expire exactly at the current timestamp are incorrectly rejected. Let me show you the fix.
-
-**Caveman (full):**
-> Bug in auth middleware. Token expiry check use `<` not `<=`. Tokens expiring at exact timestamp rejected. Fix:
-> ```python
-> if token.expiry <= now():
-> ```
+"Drop articles" applies to article languages only (English, French, German, etc.). Where small markers carry case/role — CJK particles (之/乃/為/其), postpositions — keep them: they are grammar, not filler. Compress politeness and filler instead.
 
 ## Intensity Levels
 
@@ -167,6 +167,8 @@ Preserve user's dominant language. User writes Portuguese → reply Portuguese c
 - **wenyan-full:** "池蓄已開之連，不逐請而新開，省握手之費。"
 - **wenyan-ultra:** "池蓄連，免逐請新開，省握手。"
 
+Classical characters are for wenyan modes only — never swap a word to a classical character to shrink at non-wenyan levels.
+
 ## Auto-Clarity Exception
 
 **Drop caveman temporarily for these — write clearly and completely:**
@@ -186,6 +188,8 @@ After the clear part is done, resume caveman explicitly. Signal the transition:
 > ```
 > Resume caveman. Backup exist first.
 
+Example shows FORMAT only — write warnings in the session language, not the example's.
+
 ## Boundaries
 
 | Context | Caveman? |
@@ -194,20 +198,23 @@ After the clear part is done, resume caveman explicitly. Signal the transition:
 | Code blocks (in replies) | **No** — complete, normal, syntactically valid |
 | Files written to disk | **No** — full quality, never caveman-compressed |
 | Commit messages | **No** — normal, descriptive |
-| PR descriptions, code review comments | **No** — normal, professional |
+| PR descriptions, code review comments, issue/ticket/bug-report text | **No** — body goes to other humans, normal English |
 | Documentation (READMEs, wikis, etc.) | **No** — written for humans to read later |
+| Memory files | **No** — full clarity |
 | Terminal commands | **No** — exact and complete |
 | Security warnings / destructive ops | **No** — Auto-Clarity Exception applies |
 
 ## Architecture Note
 
-The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.1.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project — the upstream repo also ships its own CLI, hooks, agents, installer, and (since v2.0.0) a BSL-1.1 input-compression engine/proxy. This plugin tracks only the upstream *skill* (the shorter-answers rules, unchanged from v1.9.1 through v2.0.0). The Hermes plugin version (2.1.0) and the upstream tag (v2.0.0) are independent — the 2.1.0 bump disambiguates the earlier 2.0.0↔2.0.0 name collision. When checking for updates, compare against the plugin's own release, not upstream repo tags.
+The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.2.0) is a **Python rewrite** that implements compression as `llm_request` middleware. It is NOT a direct mirror of the upstream `JuliusBrussee/caveman` Node.js project — the upstream repo also ships its own CLI, hooks, installer, a BSL-1.1 input-compression engine/proxy (33.2% provider-reported input-token reduction in a pinned Claude Code benchmark), and pixel-mode skill conversion. This plugin tracks only the upstream *skill* (MIT; the shorter-answers rules). The Hermes plugin version (2.2.0) and the upstream tag (v2.4.0) are independent version lines — when checking for updates, compare the plugin against the upstream SKILL.md content, not upstream release numbers.
+
+Upstream v2.2.0–v2.4.0 changes were mostly installer/proxy/CLI hardening (outside our scope); the skill itself was restructured with these rule additions, all merged here: never-ADD anti-mangle rule, tool-call discipline, article-language clarification (CJK particles are grammar), explicit negation preservation, wenyan-only classical characters, expanded Auto-Clarity (multi-step order risk, clarification requests).
 
 ## Common Pitfalls
 
 1. **Forgetting to enable the plugin.** Run `hermes plugins enable caveman` once. Without the plugin enabled, caveman mode has no effect.
 
-2. **Forgetting to restart Hermes after enabling.** Plugin changes take effect on the next session. Restart Hermes, or use `CAVEMAN_MODE=full` env var for immediate effect.
+2. **Restart myth.** Restart is needed only when a plugin is *enabled for the first time*. Level changes via `caveman on/off` apply immediately — the middleware re-reads the marker files on every LLM request (verified 2026-08-31).
 
 3. **Caveman-compressing code or file content.** The plugin only adds instructions to the system message. The agent is told to never compress code blocks, files, commits, or PR descriptions. If the agent still compresses them, the model may be over-applying the rules — try a lower intensity (lite).
 
@@ -218,6 +225,8 @@ The Hermes caveman plugin (`~/.hermes/plugins/caveman/`, v2.1.0) is a **Python r
 6. **Model ignoring compression rules despite plugin being ON.** The plugin injects instructions into the system prompt but cannot force the model to follow them. The model must actively self-enforce on every response. If the agent produces verbose paragraphs with articles, filler, markdown headings, or sign-offs while caveman is active, it has failed to apply the rules. The user will notice and call it out — this is a real correction, not a plugin issue. When caveman is ON, every response must be checked against the compression rules before delivery. No exceptions for "I was focused on the task" — the compression is part of the task.
 
 7. **Using prose abbreviations in ultra mode, or causal arrows.** They were measured to save zero tokens under BPE tokenizer. Don't use them. Standard acronyms only (DB, API, HTTP).
+
+8. **Fake-grammar mangling.** Don't insert words to sound caveman ("when it not") — that GROWS output. Keep correct verb forms when they cost the same. If the compressed phrasing isn't actually shorter, use plain.
 
 ## Silence and Non-Response
 
@@ -234,11 +243,13 @@ Err on the side of responding. Silence should be the exception, not the rule. Wh
 - [ ] Plugin enabled: `hermes plugins list` shows `caveman`
 - [ ] Caveman toggled on: `caveman status` shows ON
 - [ ] Or env var set: `echo $CAVEMAN_MODE` returns lite/full/ultra/wenyan-*
-- [ ] Restart Hermes (unless using env var method)
+- [ ] Level changes apply without restart (v2.2.0+ middleware)
 - [ ] Agent responses are compressed (no filler, articles dropped at full level)
+- [ ] No added words / fake grammar (output never grows to "sound caveman")
 - [ ] Code blocks and files remain complete and uncompressed
 - [ ] Safety content still appears in full (Auto-Clarity working)
 - [ ] No "caveman mode on", "me caveman think", or other self-references
 - [ ] Language matches user's language (no forced English)
 - [ ] No prose abbreviations in ultra mode (cfg/impl/req/res/fn)
 - [ ] No causal arrows (→) in ultra mode
+- [ ] Negations preserved (not/never/no/only/except); numbers exact

@@ -2,7 +2,7 @@
 name: rtk
 description: Use when working with terminal commands in dev workflows — git, tests, builds, linting, package managers, docker, AWS, logs. RTK is a CLI proxy that auto-compresses command output 60-90% before it reaches your context. Already installed and auto-rewriting via Hermes plugin. Check savings with "rtk gain".
 version: 1.3.0
-author: Hermes Agent (adapted from rtk-ai/rtk v0.45.0)
+author: Hermes Agent (adapted from rtk-ai/rtk v0.46.0)
 license: Apache-2.0
 metadata:
   hermes:
@@ -14,9 +14,9 @@ metadata:
 
 RTK is a high-performance CLI proxy that filters and compresses command output before it reaches your context. Single Rust binary, <10ms overhead, 100+ supported commands, 60-90% token reduction on common dev operations.
 
-**Status**: Installed (v0.45.0 at `~/.local/bin/rtk`). Hermes plugin active — terminal commands auto-rewritten through RTK via `pre_tool_call` hook.
+**Status**: Installed (v0.46.0 at `~/.local/bin/rtk`). Hermes plugin active — terminal commands auto-rewritten through RTK via `pre_tool_call` hook.
 
-**v0.45.0 highlights** (from v0.43.0): v0.45.0 — Mistral Vibe CLI hook, multiline command-block rewrite, Copilot hook self-healing. v0.44.x — git checkout + `uv run` support, PHP tooling (php/artisan/phpunit/phpstan/pest/pint), SBT (Scala), Kimi AI + Factory Droid agents, TOML filter wiring + custom-filter trust gating.
+**v0.46.0 highlights** (from v0.45.0): v0.46.0 — `find` compression (dispatches on find's grammar, compresses unmodeled predicates, tee tail hint when result cap imposed), git patch-flag misdetect fix, git log patch-output preservation, UTF-8 lossy decode instead of dropped lines, tee recovery-slug hashing. Earlier: v0.45.0 — Mistral Vibe CLI hook, multiline command-block rewrite, Copilot hook self-healing. v0.44.x — git checkout + `uv run` support, PHP tooling (php/artisan/phpunit/phpstan/pest/pint), SBT (Scala), Kimi AI + Factory Droid agents, TOML filter wiring + custom-filter trust gating.
 
 ## When to Use
 
@@ -198,7 +198,7 @@ RTK compresses aggressively. If you suspect compressed output is hiding critical
 
 ## Verification Checklist
 
-- [ ] `rtk --version` returns v0.45.0+
+- [ ] `rtk --version` returns v0.46.0+
 - [ ] Plugin at `~/.hermes/plugins/rtk-rewrite/__init__.py` exists
 - [ ] Run `git status` → output is compact (auto-rewritten)
 - [ ] Run `rtk gain` → shows tracking data (after some commands)

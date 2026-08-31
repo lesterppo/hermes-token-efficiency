@@ -30,13 +30,12 @@ case "${1:-status}" in
         echo "$LEVEL" > "$LEVEL_MARKER"
         touch "$MARKER"
         echo "Caveman mode: ON ($LEVEL)"
-        echo "Restart Hermes for the plugin to take effect."
-        echo "Or set CAVEMAN_MODE=$LEVEL for immediate effect in current session."
+        echo "Applies immediately (middleware re-reads markers per LLM call) — no restart needed."
         ;;
     off)
         rm -f "$MARKER" "$LEVEL_MARKER"
         echo "Caveman mode: OFF"
-        echo "Restart Hermes for the change to take effect."
+        echo "Applies immediately (middleware strips injected rules) — no restart needed."
         ;;
     status)
         if [ -f "$MARKER" ]; then

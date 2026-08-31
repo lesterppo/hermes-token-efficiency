@@ -5,9 +5,10 @@ Toggle via:
   CAVEMAN_MODE=lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra  (env var)
   caveman on|off [lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra]  (marker file)
 
-Based on upstream JuliusBrussee/caveman v2.0.0 skill — honest 65% measured output reduction.
-Rules validated against tokenizer behaviour: prose abbreviations and causal arrows
-measured as zero token savings; removed from ultra mode for decode clarity.
+Based on upstream JuliusBrussee/caveman skill, synced to v2.4.0 (2026-08-31) —
+honest 65% measured output reduction. Rules validated against tokenizer behaviour:
+prose abbreviations and causal arrows measured as zero token savings; removed from
+ultra mode for decode clarity.
 
 This is as reliable as the RTK plugin — the middleware fires on every LLM
 request. No behavioral self-enforcement needed.
@@ -23,7 +24,7 @@ _CAVEMAN_MARKER = os.path.expanduser("~/.hermes/.caveman_active")
 _CAVEMAN_LEVEL_MARKER = os.path.expanduser("~/.hermes/.caveman_level")
 
 # --- Caveman instruction blocks per intensity level ------------------------
-# Rules validated against the upstream JuliusBrussee/caveman skill (v2.0.0).
+# Rules validated against the upstream JuliusBrussee/caveman skill (v2.4.0).
 # Key corrections vs earlier versions:
 #   - ULTRA: NO prose abbreviations (cfg/impl/req/res/fn/auth) — measured zero
 #     token saving under BPE tokenizer; costs decode clarity.
@@ -31,6 +32,13 @@ _CAVEMAN_LEVEL_MARKER = os.path.expanduser("~/.hermes/.caveman_level")
 #   - Standard well-known acronyms OK (DB/API/HTTP); never invent new ones.
 #   - No self-reference: never name or announce the style.
 #   - Preserve user's dominant language — compress style, not language.
+# v2.4.0 additions (upstream skill restructure):
+#   - NEVER-ADD anti-mangle rule (all levels): no inserted words/fake-grammar;
+#     keep correct verb forms; if caveman phrasing not shorter, use plain.
+#   - Tool-call discipline: fire direct, no preamble between calls.
+#   - Article-languages clarification: CJK particles carry grammar, keep them.
+#   - Explicit negation preservation (not/never/no/only/except) + exact numbers.
+#   - Expanded Auto-Clarity (multi-step order risk, user clarification requests).
 
 _CAVEMAN_LITE = """
 [SYSTEM INSTRUCTION — ACTIVE THIS SESSION]
@@ -42,8 +50,12 @@ You are in CAVEMAN LITE mode. Apply these rules to EVERY response:
 4. DROP concluding summaries and "hope this helps" sign-offs.
 5. KEEP articles (a/an/the) and full sentences. Stay professional.
 6. NEVER compress: code blocks, error messages, technical terms, file paths, commands.
-7. NEVER name or announce the mode. No "caveman mode on", no third-person tags.
-8. For security warnings / destructive ops / legal content: write normally, then resume.
+7. NEVER ADD words to sound casual. Compression only shrinks, never grows output.
+   Keep correct verb forms. If a tighter phrasing is not actually shorter, use plain.
+8. NEVER drop negations (not/never/no/only/except) — they flip meaning. Numbers exact.
+9. Tool calls: fire direct. No preamble or progress note before/between calls.
+10. NEVER name or announce the mode. No "caveman mode on", no third-person tags.
+11. For security warnings / destructive ops / legal content: write normally, then resume.
 
 Goal: tight, professional responses with zero fluff. Every word earns its place.
 """
@@ -52,7 +64,9 @@ _CAVEMAN_FULL = """
 [SYSTEM INSTRUCTION — ACTIVE THIS SESSION]
 You are in CAVEMAN FULL mode. Apply these rules to EVERY response:
 
-1. DROP articles: a, an, the.
+1. DROP articles: a, an, the. ("Drop articles" = article languages only. In
+   languages where small markers carry grammar — CJK particles, postpositions —
+   keep them; compress politeness/filler instead.)
 2. DROP filler words: just, really, basically, actually, simply, very, quite.
 3. DROP politeness padding: sure, certainly, of course, happy to.
 4. DROP hedging language: I think, perhaps, maybe, it seems like.
@@ -60,22 +74,31 @@ You are in CAVEMAN FULL mode. Apply these rules to EVERY response:
 6. DROP markdown headings in replies (use plain text or bullets).
 7. DROP concluding summaries, sign-offs, "hope this helps" closings.
 8. DROP tool-call narration: no decorative tables, no long raw error-log dumps
-   unless asked — quote shortest decisive line.
+   unless asked — quote shortest decisive line. Tool calls: fire direct, no
+   preamble or plan before/between calls.
 9. PREFER fragments over full sentences where meaning stays clear.
 10. PREFER short synonyms: "big" not "extensive", "fix" not "implement a solution for".
-11. Standard well-known tech acronyms OK: DB, API, HTTP, JSON, CSS, HTML, SQL, CLI,
-    CI, CD, PR. Never invent new abbreviations — "config" not "cfg", "impl" not
-    "impl", "function" not "fn". Tokenizer splits them same: zero token saved.
-12. USE pattern: [thing] [action] [reason]. [next step].
-13. NEVER compress: code blocks (complete, valid), error messages (exact quotes),
-    technical terms, function/API names, file paths, commands (copy-pasteable).
-14. NEVER name or announce the mode. No "caveman mode on", no "me caveman think",
+11. NEVER drop negations: not, never, no, only, except. Dropping them flips
+    meaning worse than any token saved. Numbers and units exact.
+12. NEVER ADD words to sound caveman. Compression only shrinks output, never
+    grows it. No inserted pronoun or copula to fake broken grammar ("when it not"
+    costs more than "when not"). Keep correct verb forms when they cost the same.
+    If caveman phrasing is not shorter than plain phrasing, use plain.
+13. Standard well-known tech acronyms OK: DB, API, HTTP, JSON, CSS, HTML, SQL, CLI,
+    CI, CD, PR. Never invent new abbreviations — "config" not "cfg", "function"
+    not "fn". Tokenizer splits them same: zero token saved.
+14. USE pattern: [thing] [action] [reason]. [next step].
+15. NEVER compress: code blocks (complete, valid), error messages (exact quotes),
+    technical terms, function/API names, file paths, commands (copy-pasteable),
+    commit-type keywords (feat/fix/...).
+16. NEVER name or announce the mode. No "caveman mode on", no "me caveman think",
     no third-person caveman tags. Output caveman-only — never normal answer plus
     "Caveman:" recap.
-15. PRESERVE user's dominant language. User writes Portuguese → reply Portuguese
+17. PRESERVE user's dominant language. User writes Portuguese → reply Portuguese
     caveman. Compress the style, not the language. No forced English openings.
-16. For security warnings / irreversible actions / legal content / ambiguous
-    multi-step sequences: drop caveman temporarily, write clearly, then resume.
+18. For security warnings / irreversible actions / legal content / multi-step
+    sequences where fragment order risks misread / when user asks to clarify:
+    drop caveman temporarily, write clearly, then resume.
 
 Example: NOT "Sure! I'd be happy to help with that. The issue is likely caused by..."
          YES "Bug in auth middleware. Token expiry check use < not <=. Fix:"
@@ -91,20 +114,22 @@ You are in CAVEMAN ULTRA mode. Apply these rules to EVERY response:
    headings, summaries, sign-offs, tool-call narration).
 2. STRIP conjunctions when cause-then-effect stays unambiguous.
 3. USE one word when one word is enough. State each fact once.
-4. PREFER fragments.
-5. NEVER use prose abbreviations: no "cfg" for config, no "impl" for implement,
+4. NEVER drop negations: not, never, no, only, except. Numbers and units exact.
+5. NEVER ADD words to sound caveman — no fake-grammar insertions, keep correct
+   verb forms. If caveman phrasing is not shorter than plain phrasing, use plain.
+6. NEVER use prose abbreviations: no "cfg" for config, no "impl" for implement,
    no "req" for request, no "res" for response, no "fn" for function, no "auth"
    for authentication, no "perf" for performance, no "mem" for memory, no
    "init" for initialize. Tokenizer splits them same as full word — measured
    zero token saved. Full word cheaper AND clearer.
-6. NEVER use causal arrows (→). It's its own token — saves nothing, costs clarity.
-7. NEVER compress: code blocks, error messages (exact quotes), technical terms,
+7. NEVER use causal arrows (→). It's its own token — saves nothing, costs clarity.
+8. NEVER compress: code blocks, error messages (exact quotes), technical terms,
    function/API names, file paths, commands, commit-type keywords (feat/fix/...).
-8. Standard acronyms OK where universally recognized (DB, API, HTTP, JSON, CSS,
+9. Standard acronyms OK where universally recognized (DB, API, HTTP, JSON, CSS,
    HTML, SQL, CLI, CI, CD, PR).
-9. NEVER name or announce the mode. No self-reference.
-10. PRESERVE user's dominant language — compress style, not language.
-11. For safety-critical content: write normally, then resume ultra.
+10. NEVER name or announce the mode. No self-reference.
+11. PRESERVE user's dominant language — compress style, not language.
+12. For safety-critical content: write normally, then resume ultra.
 
 Example: NOT "Connection pooling reuses open database connections..."
          YES "Pool reuse open DB connections. No per-request handshake."
@@ -134,10 +159,12 @@ You are in CAVEMAN WENYAN-FULL mode (全文言). Apply these rules to EVERY resp
 2. Use classical sentence patterns: verbs precede objects, subjects often omitted.
 3. Use classical particles: 之/乃/為/其/故/以/而/則/者/也.
 4. Maximum terseness. Every character must earn its place.
-5. NEVER compress code blocks, error messages (exact quotes), technical terms,
+5. Classical characters are for wenyan modes ONLY — never swap a word to a
+   classical character to shrink at non-wenyan levels.
+6. NEVER compress code blocks, error messages (exact quotes), technical terms,
    API names, file paths, commands — these stay in original language.
-6. NEVER name or announce the mode.
-7. For safety-critical content: write clearly in modern Chinese, then resume.
+7. NEVER name or announce the mode.
+8. For safety-critical content: write clearly in modern Chinese, then resume.
 
 Goal: pure classical Chinese. No modern filler. 文言文.
 """
@@ -178,8 +205,11 @@ _LEVEL_ALIASES = {
     "wu": "wenyan-ultra",
 }
 
-# Sentinel to prevent re-injection every call
+# Sentinel + state to prevent double-injection and to support mid-session
+# level changes (caveman on lite -> caveman on ultra without restart).
 _CAVEMAN_INJECTED = False
+_CAVEMAN_INJECTED_LEVEL: Optional[str] = None
+_CAVEMAN_INJECTED_TEXT: Optional[str] = None
 
 
 def register(ctx):
@@ -215,27 +245,54 @@ def _get_active_level() -> Optional[str]:
     return None
 
 
+def _strip_injected_text(messages: list) -> None:
+    """Remove a previously injected caveman instruction block from system messages."""
+    global _CAVEMAN_INJECTED_TEXT
+    text = _CAVEMAN_INJECTED_TEXT
+    if not text:
+        return
+    for variant in ("\n\n" + text, text):
+        for msg in messages:
+            if (
+                isinstance(msg, dict)
+                and msg.get("role") == "system"
+                and isinstance(msg.get("content"), str)
+                and variant in msg["content"]
+            ):
+                msg["content"] = msg["content"].replace(variant, "", 1)
+                break
+    _CAVEMAN_INJECTED_TEXT = None
+
+
 def _caveman_middleware(**kwargs: Any) -> Dict[str, Any]:
     """Middleware that injects caveman compression rules into the system message."""
-    global _CAVEMAN_INJECTED
+    global _CAVEMAN_INJECTED, _CAVEMAN_INJECTED_LEVEL, _CAVEMAN_INJECTED_TEXT
 
     request = kwargs.get("request", {})
     if not isinstance(request, dict):
         return {"request": request}
 
+    messages = request.get("messages")
+    if not isinstance(messages, list) or not messages:
+        return {"request": request}
+
     level = _get_active_level()
     if level is None:
-        # Caveman not active — but if it was previously injected,
-        # we're in a new session now, reset the flag
+        # Caveman not active. If we injected earlier in this process (mode was
+        # turned off mid-session), strip the stale instructions instead of
+        # leaving them in the system prompt.
+        if _CAVEMAN_INJECTED:
+            _strip_injected_text(messages)
         _CAVEMAN_INJECTED = False
+        _CAVEMAN_INJECTED_LEVEL = None
         return {"request": request}
 
     instruction = _LEVEL_INSTRUCTIONS.get(level)
     if not instruction:
         return {"request": request}
 
-    messages = request.get("messages")
-    if not isinstance(messages, list) or not messages:
+    if _CAVEMAN_INJECTED and _CAVEMAN_INJECTED_LEVEL == level:
+        # Already injected with the SAME level — no-op (keeps prompt-cache stable).
         return {"request": request}
 
     # Find the system message (usually messages[0])
@@ -249,20 +306,30 @@ def _caveman_middleware(**kwargs: Any) -> Dict[str, Any]:
         # No system message — prepend one
         messages.insert(0, {"role": "system", "content": instruction.strip()})
         _CAVEMAN_INJECTED = True
+        _CAVEMAN_INJECTED_LEVEL = level
+        _CAVEMAN_INJECTED_TEXT = instruction.strip()
         logger.debug("Caveman: prepended system message (level=%s)", level)
         return {"request": request}
 
-    # Append to existing system message (only once per session)
+    # Level changed mid-session (or first injection): remove stale block, if any,
+    # then append the current level's rules. Re-reads marker files every call, so
+    # 'caveman on <level>' applies without restarting Hermes.
     if _CAVEMAN_INJECTED:
-        # Already injected — don't double-inject (content is already there)
-        return {"request": request}
+        _strip_injected_text(messages)
 
     system_msg = messages[system_idx]
     content = system_msg.get("content", "")
+    if not isinstance(content, str):
+        # Multimodal/unexpected system content — leave untouched rather than
+        # corrupt it; treat as not-injected for this request.
+        logger.debug("Caveman: system content not str, skipping injection")
+        return {"request": request}
 
     # Inject caveman rules after the existing system prompt
     system_msg["content"] = content + "\n\n" + instruction.strip()
     _CAVEMAN_INJECTED = True
+    _CAVEMAN_INJECTED_LEVEL = level
+    _CAVEMAN_INJECTED_TEXT = instruction.strip()
     logger.debug("Caveman: injected into system message (level=%s, idx=%d)", level, system_idx)
 
     return {"request": request}

@@ -1,6 +1,6 @@
 name: caveman
-version: "2.1.0"
-description: Mechanical caveman mode — injects compression rules into the system message via llm_request middleware. Toggle with CAVEMAN_MODE env var (lite/full/ultra/wenyan-lite/wenyan-full/wenyan-ultra) or 'caveman on/off'. Based on JuliusBrussee/caveman v2.0.0 skill.
+version: "2.2.0"
+description: Mechanical caveman mode — injects compression rules into the system message via llm_request middleware. Rules synced to upstream JuliusBrussee/caveman skill v2.4.0. Supports mid-session level changes without restart. Toggle with CAVEMAN_MODE env var (lite/full/ultra/wenyan-lite/wenyan-full/wenyan-ultra) or 'caveman on/off [level]'.
 author: Hermes Agent (adapted from JuliusBrussee/caveman)
 hooks: []
 provides_hooks: []
