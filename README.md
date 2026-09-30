@@ -1,7 +1,7 @@
 # Hermes Token Efficiency Stack
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![RTK v0.46.0](https://img.shields.io/badge/RTK-v0.46.0-green)](https://github.com/rtk-ai/rtk)
+[![RTK v0.50.0](https://img.shields.io/badge/RTK-v0.50.0-green)](https://github.com/rtk-ai/rtk)
 [![Caveman skill v2.4.0](https://img.shields.io/badge/Caveman_skill-v2.4.0-orange)](https://github.com/JuliusBrussee/caveman)
 [![Stars](https://img.shields.io/github/stars/lesterppo/hermes-token-efficiency?color=yellow)](https://github.com/lesterppo/hermes-token-efficiency/stargazers)
 
@@ -60,7 +60,7 @@ rtk gain                # Token savings tracking
 
 | Component | Type | Source | How It Works |
 |-----------|------|--------|-------------|
-| **RTK binary** | Rust CLI (v0.46.0) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (76K stars) | Compresses 100+ commands: git, tests, docker, AWS, k8s, logs, builds, find |
+| **RTK binary** | Rust CLI (v0.50.0) | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) (76K stars) | Compresses 100+ commands: git, tests, docker, AWS, k8s, logs, builds, find |
 | **RTK plugin** | Hermes plugin | pre_tool_call hook | Auto-rewrites `terminal()` commands through RTK before execution |
 | **Caveman plugin** | Hermes plugin (v2.2.0) | llm_request middleware | Injects compression rules into system message; re-reads level markers per call (mid-session level changes work) |
 | **Caveman CLI** | Shell script | `~/.local/bin/caveman` | Toggle: `caveman on/off lite/full/ultra/wenyan-*` |
